@@ -16,4 +16,5 @@ python resize.py --maxwidth 150 --maxheight 80 fish.jpg
 
 
 run toolmenu with:
-python ../toolmenu.py --substitute @@PREFIX@@ `pwd`
+chmod 644 ../toolmenu
+../toolmenu --substitute @@PREFIX@@ `pwd`
