@@ -1,0 +1,19 @@
+All images are public domain.
+
+frog:
+http://www.public-domain-image.com/free-images/fauna-animals/reptiles-and-amphibians/frog-pictures/guajon-female-frog-eleutherodactylus-cooki/attachment/guajon-female-frog-eleutherodactylus-cooki
+
+mouse:
+https://en.wikipedia.org/wiki/File:House_mouse.jpg
+
+fish:
+https://en.wikipedia.org/wiki/File:Arothron_meleagris_by_NPS_1.jpg
+
+
+resize images with:
+python resize.py *.jpg
+python resize.py --maxwidth 150 --maxheight 80 fish.jpg
+
+
+run toolmenu with:
+python ../toolmenu.py --substitute @@PREFIX@@ `pwd`

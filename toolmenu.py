@@ -1,0 +1,127 @@
+import Tkinter
+import os
+import json
+import argparse
+import re
+import subprocess
+from PIL import Image, ImageTk
+
+
+def launch_app(app):
+    if data[app]['pro'] is not None:
+        # kill previously running app
+        data[app]['pro'].kill()
+        data[app]['pro'] = None
+    if data[app]['pro'] is None:
+        # launch new instance of app
+        command = config['applications'][app]['command']
+        data[app]['pro'] = subprocess.Popen(
+                                command,
+                                stdin=subprocess.PIPE,
+                                close_fds=True)
+
+
+# parse the command line options
+command_parser = argparse.ArgumentParser(usage=None)
+command_parser.add_argument(
+    '--config',
+    help='file path of the configuration file',
+    action="store",
+    dest="config",
+    default="toolmenu.conf",
+    type=str
+)
+command_parser.add_argument(
+    '--substitute',
+    help='variable substitution in config file',
+    action="append",
+    nargs=2,
+    dest="substitutions",
+    default=None,
+    type=str
+)
+
+cl_options, cl_unknown = command_parser.parse_known_args()
+
+
+# read the json configuration file
+with open(cl_options.config,'r') as fp:
+    configstr = fp.read()
+
+# perform substitutions
+for s in cl_options.substitutions:
+    configstr = re.sub(s[0],s[1],configstr)
+
+# parse the json
+config = json.loads(configstr)
+
+
+label_config = {'font' : 'Arial 12 bold',
+               }
+
+button_config = {'font' : 'Arial 8 bold',
+                 'width' : 150,
+                 'height' : 80,
+                }
+
+# keep track of buttons, images, process and
+# other junk variables because creating
+# temp variables in python seems cumbersome.
+# can't make deep copies of Tk objects, so we
+# store them in temp vars
+data = {
+    # 'app' : { 'btn' : <button-var>,
+    #           'img' : <image-obj>,
+    #           'pho' : <photo-obj>,
+    #           'pro' : <subprocess-object>,
+    #         }
+}
+
+root = Tkinter.Tk()
+root.wm_title("Tool Menu")
+
+row = 0
+
+# add a label at the top of the menu
+mesgl = Tkinter.Label(root,
+            font=label_config['font'],
+            text=config['title'])
+
+mesgl.grid(column=0, row=row, columnspan=3, pady=4,
+    sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
+
+for app in config['index']:
+
+    data[app] = {'btn' : None,          # button object
+                 'img' : None,          # image object
+                 'pho' : None,          # photo object
+                 'pro' : None,          # process object
+                }
+
+    # get the file name, read it as a PIL image
+    # then create a Tk PhotoImage.
+    ifn = os.path.realpath(config['applications'][app]['image'])
+    data[app]['img'] = Image.open(ifn)
+    data[app]['pho'] = ImageTk.PhotoImage(data[app]['img'])
+
+    # create a button for the application
+    # use an anonymous function wrapped in another
+    # anonymous function to launch the application.
+    # the first anonymous function is to keep scope
+    # of the app variable intact. the second anonymous
+    # function is the one we are really interested in.
+    cmd=(lambda x: lambda: launch_app(x))(app)
+    data[app]['btn'] = Tkinter.Button(root,
+                            font=button_config['font'],
+                            text=config['applications'][app]['text'],
+                            command=cmd,
+                            image=data[app]['pho'],
+                            height=button_config['height'],
+                            width=button_config['width'])
+
+    # place the button in the window.
+    row += 1
+    data[app]['btn'].grid(column=0, row=row)
+
+
+root.mainloop()
